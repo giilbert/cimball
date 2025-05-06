@@ -1,0 +1,10 @@
+[package]
+name = "cimball_server"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+maf = { path = "../maf/crates/maf" }
+
+[lib]
+crate-type = ["cdylib"]
