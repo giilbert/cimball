@@ -5,6 +5,7 @@ edition = "2024"
 
 [dependencies]
 maf = { path = "../maf/crates/maf" }
+serde = "^1"
 
 [lib]
 crate-type = ["cdylib"]

@@ -12,9 +12,11 @@
   "dependencies": {
     "@fontsource/carter-one": "^5.2.5",
     "@fontsource/itim": "^5.2.6",
+    "@maf/client": "workspace:*",
     "@tanstack/react-router": "^1.119.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "motion": "^12.10.0",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "tailwind-merge": "^3.2.0"
