@@ -69,14 +69,17 @@ const VideoThing: React.FC = () => {
 
       const remoteConfiguration = {};
       const connection = new RTCPeerConnection(remoteConfiguration);
+
       connection.addEventListener("icecandidate", (event) => {
         console.log("icecandidate", event);
         if (event.candidate)
           maf.rpc("viewer_send_ice_candidate", event.candidate.toJSON());
       });
-      connection.addEventListener("iceconnectionstatechange", () =>
-        console.log("iceconnectionstatechange", connection.iceConnectionState)
-      );
+
+      connection.addEventListener("iceconnectionstatechange", () => {
+        console.log("iceconnectionstatechange", connection.iceConnectionState);
+      });
+
       connection.addEventListener("track", (event) => {
         console.log("got track", event);
         videoRef.current!.srcObject = event.streams[0];
