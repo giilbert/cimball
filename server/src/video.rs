@@ -1,4 +1,4 @@
-use maf::{app::Plugin, serde_json::Value, *};
+use maf::{serde_json::Value, *};
 
 use crate::error::{RpcError, RpcResult};
 
@@ -6,20 +6,12 @@ pub struct Admin {
     id: Uuid,
 }
 
-impl StoreData for Admin {
-    type Data = Self;
-
-    fn init() -> Self::Data {
-        Admin { id: Uuid::new_v4() }
-    }
-}
-
 trait AdminStoreExt {
     async fn get(&self, app: &App) -> RpcResult<User>;
     async fn assert(&self, user: User) -> RpcResult<()>;
 }
 
-impl AdminStoreExt for Store<Admin> {
+impl AdminStoreExt for State<Admin> {
     async fn get(&self, app: &App) -> RpcResult<User> {
         let admin = self.read().await;
         Ok(app
@@ -37,7 +29,7 @@ impl AdminStoreExt for Store<Admin> {
     }
 }
 
-async fn start_viewer(user: User, admin: Store<Admin>, app: App) -> RpcResult<()> {
+async fn start_viewer(user: User, admin: State<Admin>, app: App) -> RpcResult<()> {
     let admin = admin.get(&app).await?;
 
     app.channel::<Uuid>("new_viewer")
@@ -47,7 +39,7 @@ async fn start_viewer(user: User, admin: Store<Admin>, app: App) -> RpcResult<()
     Ok(())
 }
 
-async fn join_admin(user: User, admin: Store<Admin>, Params(secret): Params<String>) -> bool {
+async fn join_admin(user: User, admin: State<Admin>, Params(secret): Params<String>) -> bool {
     const ADMIN_SECRET: &str = include_str!("../ADMIN_SECRET");
 
     if secret != ADMIN_SECRET {
@@ -61,7 +53,7 @@ async fn join_admin(user: User, admin: Store<Admin>, Params(secret): Params<Stri
 
 async fn admin_send_ice_candidate(
     user: User,
-    admin: Store<Admin>,
+    admin: State<Admin>,
     app: App,
     Params((viewer_id, candidate)): Params<(Uuid, Value)>,
 ) -> RpcResult<()> {
@@ -79,7 +71,7 @@ async fn admin_send_ice_candidate(
 
 async fn viewer_send_ice_candidate(
     user: User,
-    admin: Store<Admin>,
+    admin: State<Admin>,
     app: App,
     Params(candidate): Params<Value>,
 ) -> RpcResult<()> {
@@ -95,7 +87,7 @@ async fn viewer_send_ice_candidate(
 
 async fn viewer_offer_response(
     user: User,
-    admin: Store<Admin>,
+    admin: State<Admin>,
     app: App,
     Params((viewer_id, sdp)): Params<(Uuid, String)>,
 ) -> RpcResult<()> {
@@ -113,7 +105,7 @@ async fn viewer_offer_response(
 
 async fn viewer_answer(
     user: User,
-    admin: Store<Admin>,
+    admin: State<Admin>,
     app: App,
     Params(sdp): Params<String>,
 ) -> RpcResult<()> {
@@ -133,7 +125,8 @@ impl Plugin for VideoPlugin {
     fn build(&self, app: AppBuilder) -> AppBuilder {
         tracing::info!("video plugin loaded!");
 
-        app.rpc("join_admin", join_admin)
+        app.state(Admin { id: Uuid::nil() })
+            .rpc("join_admin", join_admin)
             .rpc("start_viewer", start_viewer)
             .rpc("viewer_offer_response", viewer_offer_response)
             .rpc("viewer_answer", viewer_answer)

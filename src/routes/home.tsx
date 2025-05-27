@@ -2,9 +2,9 @@ import { createRoute } from "@tanstack/react-router";
 import { Button } from "../components/button";
 import { Input } from "../components/input";
 import { layoutRoute } from "./layout";
-import { useEffect, useRef } from "react";
+import { Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { useMafClient } from "../lib/maf-context";
-import { video } from "motion/react-client";
+import { useStoreSuspense } from "../lib/maf";
 
 const Sidebar: React.FC = () => {
   return (
@@ -14,30 +14,9 @@ const Sidebar: React.FC = () => {
       <div className="space-y-1">
         <p className="text-xl">up next..</p>
 
-        <div className="border p-2">
-          <ol className="list-decimal list-inside">
-            <li>
-              Gilbert{" "}
-              <span className="bg-orange-400 text-white font-bold px-1">
-                (YOU)
-              </span>
-            </li>
-            <li>Kyle</li>
-            <li>Jeffrey</li>
-            <li>Kevin</li>
-            <li>Mr. Harb</li>
-          </ol>
-
-          <p>and (43) more..</p>
-        </div>
-      </div>
-
-      <div className="mt-3 w-full">
-        <label htmlFor="nickname">nickname</label>
-        <div className="flex gap-1 w-full">
-          <Input className="w-full" id="nickname" />
-          <Button className="h-full">join</Button>
-        </div>
+        <Suspense fallback={<p>loading queue...</p>}>
+          <Queue />
+        </Suspense>
       </div>
     </div>
   );
@@ -71,23 +50,23 @@ const VideoThing: React.FC = () => {
       const connection = new RTCPeerConnection(remoteConfiguration);
 
       connection.addEventListener("icecandidate", (event) => {
-        console.log("icecandidate", event);
+        // console.log("icecandidate", event);
         if (event.candidate)
           maf.rpc("viewer_send_ice_candidate", event.candidate.toJSON());
       });
 
-      connection.addEventListener("iceconnectionstatechange", () => {
-        console.log("iceconnectionstatechange", connection.iceConnectionState);
-      });
+      // connection.addEventListener("iceconnectionstatechange", () => {
+      //   console.log("iceconnectionstatechange", connection.iceConnectionState);
+      // });
 
       connection.addEventListener("track", (event) => {
-        console.log("got track", event);
+        // console.log("got track", event);
         videoRef.current!.srcObject = event.streams[0];
         videoRef.current!.play();
       });
 
       maf.channel("ice_candidate").on("message", async (message) => {
-        console.log("got remote ice candidate", message);
+        // console.log("got remote ice candidate", message);
         const candidate = message as RTCIceCandidateInit;
         await connection.addIceCandidate(new RTCIceCandidate(candidate));
       });
@@ -98,7 +77,7 @@ const VideoThing: React.FC = () => {
       await connection.setLocalDescription(answer);
 
       maf.rpc("viewer_answer", answer.sdp);
-      console.log("answer:", answer);
+      // console.log("answer:", answer);
     }
 
     if (hasRun.current) return;
@@ -110,6 +89,64 @@ const VideoThing: React.FC = () => {
     <div className="col-span-2 bg-neutral-900 relative">
       <video ref={videoRef} autoPlay playsInline className="h-full w-auto" />
     </div>
+  );
+};
+
+export const Queue: React.FC = () => {
+  const { data } = useStoreSuspense<string[]>("queue");
+  const [inQueue, setInQueue] = useState(false);
+  const maf = useMafClient();
+  const [nameInput, setNameInput] = useState("");
+
+  const joinQueue = useCallback(
+    async (name: string) => {
+      maf.rpc("join_queue", name);
+    },
+    [maf]
+  );
+
+  return (
+    <>
+      <div className="border p-2">
+        <ol className="list-decimal list-inside">
+          {data.map((item, index) => (
+            <li key={index} className="text-sm">
+              {item}
+            </li>
+          ))}
+        </ol>
+
+        {data.length === 0 && (
+          <p className="text-sm text-neutral-700">no one in queue. join it!</p>
+        )}
+      </div>
+
+      {!inQueue && (
+        <form
+          className="mt-3 w-full"
+          onSubmit={(e) => {
+            e.preventDefault();
+            if (nameInput.length < 1) return;
+            joinQueue(nameInput);
+            setNameInput("");
+            setInQueue(true);
+          }}
+        >
+          <label htmlFor="nickname">nickname</label>
+          <div className="flex gap-1 w-full">
+            <Input
+              className="w-full"
+              id="nickname"
+              value={nameInput}
+              onChange={(e) => setNameInput(e.target.value)}
+            />
+            <Button className="h-full" type="submit">
+              join
+            </Button>
+          </div>
+        </form>
+      )}
+    </>
   );
 };
 

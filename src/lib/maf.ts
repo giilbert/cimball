@@ -1,4 +1,6 @@
 import type { MafClient } from "@maf/client";
+import { useMafClient } from "./maf-context";
+import { use, useEffect, useState } from "react";
 
 const isResult = (
   result: unknown
@@ -25,4 +27,18 @@ export const rpc = async <T>(
   }
 
   return result.Ok as T;
+};
+
+export const useStoreSuspense = <T>(name: string) => {
+  const maf = useMafClient();
+  const store = maf.store<T>(name);
+  use(store.init);
+
+  const [data, setData] = useState<T>(store.data);
+
+  useEffect(() => {
+    store.on("change", setData);
+  }, [store]);
+
+  return { data, store };
 };
