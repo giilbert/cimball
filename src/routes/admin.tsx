@@ -4,6 +4,7 @@ import { useMafClient } from "../lib/maf-context";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "../components/button";
 import type { MafClient } from "@maf/client";
+import { getRtcConfig } from "../lib/rtc-helper";
 
 const AdminPage: React.FC = () => {
   const maf = useMafClient();
@@ -80,10 +81,16 @@ const VideoThing: React.FC = () => {
       audio: false,
     });
 
+    // const media = await navigator.mediaDevices.getDisplayMedia({
+    //   video: true,
+    //   audio: false,
+    // });
+
     // TODO: these should be kept separate
     const connections = new Connections(maf, media);
 
     videoRef.current.srcObject = media;
+    await videoRef.current.requestPictureInPicture();
   }, [maf]);
 
   useEffect(() => {
@@ -153,7 +160,7 @@ class Connections {
     maf.channel<string>("new_viewer").on("message", async (viewerId) => {
       console.log("new viewer", viewerId, "creating offer...");
 
-      const connection = new RTCPeerConnection();
+      const connection = new RTCPeerConnection(await getRtcConfig());
 
       connection.addEventListener("icecandidate", (event) => {
         console.log("got local icecandidate", event.candidate);

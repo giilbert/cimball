@@ -40,6 +40,7 @@ export const MafProvider: React.FC<{
     const client = new MafClient({
       app: "gilbert/cimball",
       url: "http://localhost:3000",
+      // url: "https://maf-server.fly.dev",
     });
     clientRef.current = client;
 

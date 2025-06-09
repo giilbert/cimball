@@ -1,4 +1,6 @@
 mod error;
+mod player;
+mod points;
 mod queue;
 mod video;
 
@@ -16,6 +18,8 @@ fn build() -> App {
 
     App::builder()
         .on_connect(on_connect)
+        .plugin(points::PointsPlugin)
+        .plugin(player::PlayerPlugin)
         .plugin(video::VideoPlugin)
         .plugin(queue::QueuePlugin)
         .build()

@@ -1,3 +1,6 @@
 [submodule "maf"]
 	path = maf
 	url = https://github.com/giilbert/maf
+[submodule "cimball-broker/maf"]
+	path = cimball-broker/maf
+	url = https://github.com/giilbert/maf

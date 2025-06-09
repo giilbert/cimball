@@ -2,22 +2,29 @@ import { createRoute } from "@tanstack/react-router";
 import { Button } from "../components/button";
 import { Input } from "../components/input";
 import { layoutRoute } from "./layout";
-import { Suspense, useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useMafClient } from "../lib/maf-context";
 import { useStoreSuspense } from "../lib/maf";
+import { ControlsDisplay } from "../components/controls-display";
+import { getRtcConfig } from "../lib/rtc-helper";
+import { PointsDisplay } from "../components/points-display";
 
 const Sidebar: React.FC = () => {
   return (
     <div className="col-span-1 p-4 space-y-4">
       <h1 className="font-['Carter_One'] text-6xl text-slate-950">CIMBALL</h1>
 
-      <div className="space-y-1">
+      <PointsDisplay />
+
+      <ControlsDisplay />
+
+      {/* <div className="space-y-1">
         <p className="text-xl">up next..</p>
 
         <Suspense fallback={<p>loading queue...</p>}>
           <Queue />
         </Suspense>
-      </div>
+      </div> */}
     </div>
   );
 };
@@ -46,8 +53,7 @@ const VideoThing: React.FC = () => {
 
       console.log("got sdp:\n", sdp);
 
-      const remoteConfiguration = {};
-      const connection = new RTCPeerConnection(remoteConfiguration);
+      const connection = new RTCPeerConnection(await getRtcConfig());
 
       connection.addEventListener("icecandidate", (event) => {
         // console.log("icecandidate", event);
@@ -86,7 +92,7 @@ const VideoThing: React.FC = () => {
   }, [maf]);
 
   return (
-    <div className="col-span-2 bg-neutral-900 relative">
+    <div className="col-span-3 bg-neutral-900 relative">
       <video ref={videoRef} autoPlay playsInline className="h-full w-auto" />
     </div>
   );
